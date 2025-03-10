@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'Plan.dart';
 
 class CreatePlanModal extends StatefulWidget {
-  final Function(String, String, DateTime) addPlan;
+  final Function(String, String, DateTime, String) addPlan;
   final Plan? plan;
 
   CreatePlanModal({required this.addPlan, this.plan});
@@ -15,6 +15,7 @@ class _CreatePlanModalState extends State<CreatePlanModal> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+  String _selectedPriority = 'Medium';
 
   @override
   void initState() {
@@ -23,6 +24,7 @@ class _CreatePlanModalState extends State<CreatePlanModal> {
       _nameController.text = widget.plan!.name;
       _descriptionController.text = widget.plan!.description;
       _selectedDate = widget.plan!.date;
+      _selectedPriority = widget.plan!.priority;
     }
   }
 
@@ -47,9 +49,16 @@ class _CreatePlanModalState extends State<CreatePlanModal> {
             },
             child: Text("Select Date: ${_selectedDate.toLocal()}".split(' ')[0]),
           ),
+          DropdownButton<String>(
+            value: _selectedPriority,
+            onChanged: (value) => setState(() => _selectedPriority = value!),
+            items: ['Low', 'Medium', 'High'].map((String priority) {
+              return DropdownMenuItem(value: priority, child: Text(priority));
+            }).toList(),
+          ),
           ElevatedButton(
             onPressed: () {
-              widget.addPlan(_nameController.text, _descriptionController.text, _selectedDate);
+              widget.addPlan(_nameController.text, _descriptionController.text, _selectedDate, _selectedPriority);
               Navigator.pop(context);
             },
             child: Text("Save Plan"),

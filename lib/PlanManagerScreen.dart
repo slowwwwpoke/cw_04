@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'Plan.dart';
-import 'CreatePlanModal.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'plan.dart'; // Import the Plan model
 
 class PlanManagerScreen extends StatefulWidget {
   @override
@@ -10,19 +10,19 @@ class PlanManagerScreen extends StatefulWidget {
 class _PlanManagerScreenState extends State<PlanManagerScreen> {
   List<Plan> plans = [];
 
-  void addPlan(String name, String description, DateTime date) {
+  void addPlan(String name, String description, DateTime date, String priority) {
     setState(() {
-      plans.add(Plan(name: name, description: description, date: date));
+      plans.add(Plan(name: name, description: description, date: date, priority: priority));
     });
   }
 
-  void updatePlan(int index, String newName, String newDescription, DateTime newDate) {
+  void updatePlan(int index, String name, String description, DateTime date, String priority) {
     setState(() {
-      plans[index] = Plan(name: newName, description: newDescription, date: newDate);
+      plans[index] = Plan(name: name, description: description, date: date, priority: priority);
     });
   }
 
-  void togglePlanCompletion(int index) {
+  void markAsCompleted(int index) {
     setState(() {
       plans[index].isCompleted = !plans[index].isCompleted;
     });
@@ -34,42 +34,99 @@ class _PlanManagerScreenState extends State<PlanManagerScreen> {
     });
   }
 
+  void showCreatePlanModal() {
+    TextEditingController nameController = TextEditingController();
+    TextEditingController descriptionController = TextEditingController();
+    DateTime selectedDate = DateTime.now();
+    String selectedPriority = "Medium";
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Create New Plan"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameController, decoration: InputDecoration(labelText: "Plan Name")),
+              TextField(controller: descriptionController, decoration: InputDecoration(labelText: "Description")),
+              DropdownButton<String>(
+                value: selectedPriority,
+                onChanged: (value) {
+                  setState(() {
+                    selectedPriority = value!;
+                  });
+                },
+                items: ["Low", "Medium", "High"].map((priority) {
+                  return DropdownMenuItem(value: priority, child: Text(priority));
+                }).toList(),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  addPlan(nameController.text, descriptionController.text, selectedDate, selectedPriority);
+                  Navigator.pop(context);
+                },
+                child: Text("Add Plan"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Adoption & Travel Plans")),
+      floatingActionButton: FloatingActionButton(
+        onPressed: showCreatePlanModal,
+        child: Icon(Icons.add),
+      ),
       body: ListView.builder(
         itemCount: plans.length,
         itemBuilder: (context, index) {
           final plan = plans[index];
-          return GestureDetector(
-            onDoubleTap: () => deletePlan(index),
-            child: Dismissible(
-              key: Key(plan.name),
-              onDismissed: (_) => togglePlanCompletion(index),
-              background: Container(color: Colors.green),
-              child: Card(
-                color: plan.isCompleted ? Colors.green[200] : Colors.white,
-                child: ListTile(
-                  title: Text(plan.name),
-                  trailing: Icon(plan.isCompleted ? Icons.check : Icons.pending),
+
+          return Slidable(
+            key: ValueKey(plan.name),
+            startActionPane: ActionPane(
+              motion: const DrawerMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context) => markAsCompleted(index),
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  icon: Icons.check,
+                  label: 'Complete',
+                ),
+              ],
+            ),
+            endActionPane: ActionPane(
+              motion: const DrawerMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context) => deletePlan(index),
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete,
+                  label: 'Delete',
+                ),
+              ],
+            ),
+            child: ListTile(
+              title: Text(
+                plan.name,
+                style: TextStyle(
+                  decoration: plan.isCompleted ? TextDecoration.lineThrough : null,
                 ),
               ),
+              subtitle: Text(plan.description),
+              trailing: Text(plan.priority, style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openCreatePlanModal(context),
-        child: Icon(Icons.add),
-      ),
-    );
-  }
-
-  void _openCreatePlanModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => CreatePlanModal(addPlan: addPlan),
     );
   }
 }
