@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'plan.dart'; // Import the Plan model
+import 'plan.dart';
 
 class PlanManagerScreen extends StatefulWidget {
   @override
@@ -32,6 +32,33 @@ class _PlanManagerScreenState extends State<PlanManagerScreen> {
     setState(() {
       plans.removeAt(index);
     });
+  }
+
+  /// Get color based on status (Pending/Completed) & Priority (High/Medium/Low)
+  Color getPlanColor(Plan plan) {
+    if (plan.isCompleted) {
+      switch (plan.priority) {
+        case "High":
+          return Colors.red[200]!; // Faded Red for Completed High Priority
+        case "Medium":
+          return Colors.orange[200]!; // Faded Orange for Completed Medium Priority
+        case "Low":
+          return Colors.green[200]!; // Faded Green for Completed Low Priority
+        default:
+          return Colors.grey[400]!;
+      }
+    } else {
+      switch (plan.priority) {
+        case "High":
+          return Colors.red[400]!; // Dark Red for Pending High Priority
+        case "Medium":
+          return Colors.orange[400]!; // Dark Orange for Pending Medium Priority
+        case "Low":
+          return Colors.green[400]!; // Dark Green for Pending Low Priority
+        default:
+          return Colors.blue[300]!;
+      }
+    }
   }
 
   void showCreatePlanModal() {
@@ -114,15 +141,26 @@ class _PlanManagerScreenState extends State<PlanManagerScreen> {
                 ),
               ],
             ),
-            child: ListTile(
-              title: Text(
-                plan.name,
-                style: TextStyle(
-                  decoration: plan.isCompleted ? TextDecoration.lineThrough : null,
+            child: Container(
+              margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+              decoration: BoxDecoration(
+                color: getPlanColor(plan), // Color based on status & priority
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ListTile(
+                title: Text(
+                  plan.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    decoration: plan.isCompleted ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                subtitle: Text(plan.description),
+                trailing: Text(
+                  plan.priority,
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              subtitle: Text(plan.description),
-              trailing: Text(plan.priority, style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           );
         },
